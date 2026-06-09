@@ -1,0 +1,52 @@
+version: 2
+
+sources:
+  - name: raw
+    database: your_snowflake_db
+    schema: raw
+    tables:
+      - name: orders
+      - name: customers
+
+models:
+  - name: stg_orders
+    description: "Cleaned orders data from raw source"
+    columns:
+      - name: order_id
+        tests:
+          - unique
+          - not_null
+      - name: status
+        tests:
+          - accepted_values:
+              values: ['completed', 'pending', 'cancelled']
+
+  - name: stg_customers
+    description: "Cleaned customers data"
+    columns:
+      - name: customer_id
+        tests:
+          - unique
+          - not_null
+
+  - name: fct_orders
+    description: "Final orders fact table with revenue calculation"
+    columns:
+      - name: order_id
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_customers')
+              field: customer_id
+
+  - name: dim_customer_summary
+    description: "Customer level aggregated summary"
+    columns:
+      - name: customer_id
+        tests:
+          - unique
+          - not_null
